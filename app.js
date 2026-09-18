@@ -1,13 +1,38 @@
 (()=>{"use strict";
-const KEY="dillo_dashboard_v1",seed={clients:[{id:1,name:"Mia Santos",company:"Bloom Wellness",email:"mia@bloom.test",status:"Active",projects:2},{id:2,name:"Lucas Reed",company:"Northstar Finance",email:"lucas@northstar.test",status:"Active",projects:1},{id:3,name:"Sofia Cruz",company:"Casa Migration",email:"sofia@casa.test",status:"Onboarding",projects:1},{id:4,name:"Eli Parker",company:"Good Energy Co.",email:"eli@goodenergy.test",status:"Paused",projects:0}],projects:[{id:1,name:"Bloom — September Content",client:"Bloom Wellness",status:"In progress",progress:72,due:"Sep 24",budget:650},{id:2,name:"Northstar Brand Refresh",client:"Northstar Finance",status:"Review",progress:88,due:"Sep 20",budget:900},{id:3,name:"Casa TikTok Launch",client:"Casa Migration",status:"In progress",progress:41,due:"Sep 29",budget:750}],invoices:[{id:1,number:"INV-104",client:"Bloom Wellness",amount:650,status:"Paid",due:"Sep 05"},{id:2,number:"INV-105",client:"Northstar Finance",amount:900,status:"Pending",due:"Sep 20"},{id:3,number:"INV-106",client:"Casa Migration",amount:750,status:"Overdue",due:"Sep 10"}],files:[{id:1,name:"Bloom Brand Kit.pdf",client:"Bloom Wellness",type:"PDF",size:"4.2 MB",status:"Approved"},{id:2,name:"Northstar Logo Pack.zip",client:"Northstar Finance",type:"ZIP",size:"8.1 MB",status:"Pending"},{id:3,name:"Casa Content Brief.docx",client:"Casa Migration",type:"DOC",size:"1.1 MB",status:"Approved"}],events:[{id:1,date:"2026-09-20",title:"Northstar review"},{id:2,date:"2026-09-22",title:"Bloom strategy call"},{id:3,date:"2026-09-24",title:"Bloom content due"},{id:4,date:"2026-09-29",title:"Casa launch"}],activity:["Bloom Wellness approved September content","Invoice INV-105 was sent","Casa Migration uploaded a content brief","Northstar moved branding into review"]};
+const KEY="dillo_dashboard_v2",seed={clients:[{id:1,name:"Mia Santos",company:"Bloom Wellness",email:"mia@bloom.test",status:"Active",projects:2},{id:2,name:"Lucas Reed",company:"Northstar Finance",email:"lucas@northstar.test",status:"Active",projects:1},{id:3,name:"Sofia Cruz",company:"Casa Migration",email:"sofia@casa.test",status:"Onboarding",projects:1},{id:4,name:"Eli Parker",company:"Good Energy Co.",email:"eli@goodenergy.test",status:"Paused",projects:0}],projects:[{id:1,name:"Bloom — September Content",client:"Bloom Wellness",status:"In progress",progress:72,due:"Sep 24",budget:650},{id:2,name:"Northstar Brand Refresh",client:"Northstar Finance",status:"Review",progress:88,due:"Sep 20",budget:900},{id:3,name:"Casa TikTok Launch",client:"Casa Migration",status:"In progress",progress:41,due:"Sep 29",budget:750}],invoices:[{id:1,number:"INV-104",client:"Bloom Wellness",amount:650,status:"Paid",due:"Sep 05"},{id:2,number:"INV-105",client:"Northstar Finance",amount:900,status:"Pending",due:"Sep 20"},{id:3,number:"INV-106",client:"Casa Migration",amount:750,status:"Overdue",due:"Sep 10"}],files:[{id:1,name:"Bloom Brand Kit.pdf",client:"Bloom Wellness",type:"PDF",size:"4.2 MB",status:"Approved"},{id:2,name:"Northstar Logo Pack.zip",client:"Northstar Finance",type:"ZIP",size:"8.1 MB",status:"Pending"},{id:3,name:"Casa Content Brief.docx",client:"Casa Migration",type:"DOC",size:"1.1 MB",status:"Approved"}],events:[{id:1,date:"2026-09-20",title:"Northstar review"},{id:2,date:"2026-09-22",title:"Bloom strategy call"},{id:3,date:"2026-09-24",title:"Bloom content due"},{id:4,date:"2026-09-29",title:"Casa launch"}],activity:["Bloom Wellness approved September content","Invoice INV-105 was sent","Casa Migration uploaded a content brief","Northstar moved branding into review"]};
 let state=load(),page=document.getElementById("page"),back=document.getElementById("modalBackdrop"),content=document.getElementById("modalContent"),title=document.getElementById("viewTitle");
-function load(){try{return JSON.parse(localStorage.getItem(KEY))||structuredClone(seed)}catch{return structuredClone(seed)}}function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function load(){
+try{
+const raw=JSON.parse(localStorage.getItem(KEY));
+if(!raw)return structuredClone(seed);
+return {
+clients:Array.isArray(raw.clients)?raw.clients:structuredClone(seed.clients),
+projects:Array.isArray(raw.projects)?raw.projects:structuredClone(seed.projects),
+invoices:Array.isArray(raw.invoices)?raw.invoices:structuredClone(seed.invoices),
+files:Array.isArray(raw.files)?raw.files:structuredClone(seed.files),
+events:Array.isArray(raw.events)?raw.events:structuredClone(seed.events),
+activity:Array.isArray(raw.activity)?raw.activity:structuredClone(seed.activity)
+}
+}catch{return structuredClone(seed)}
+}function save(){localStorage.setItem(KEY,JSON.stringify(state))}
 function esc(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}function money(n){return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(n)}function toast(s){let x=document.createElement("div");x.className="toast";x.textContent=s;document.getElementById("toastStack").append(x);setTimeout(()=>x.remove(),2500)}
 function tag(s){let x=String(s).toLowerCase(),c=x.includes("paid")||x.includes("active")||x.includes("approved")?"green":x.includes("overdue")||x.includes("paused")?"red":x.includes("review")||x.includes("pending")||x.includes("onboarding")?"yellow":"blue";return '<span class="tag '+c+'">'+esc(s)+"</span>"}
 function panel(h,b,a=""){return '<section class="panel"><div class="panel-head"><h2>'+h+"</h2>"+a+'</div><div class="panel-body">'+b+"</div></section>"}
 function shell(h,p,a=""){return '<div class="hero"><div><div class="eyebrow">DILLO SOCIALS</div><h1>'+h+'</h1><p>'+p+'</p></div><div class="hero-actions">'+a+"</div></div>"}
 const views={overview:()=>renderOverview(),clients:()=>renderClients(),projects:()=>renderProjects(),calendar:()=>renderCalendar(),invoices:()=>renderInvoices(),files:()=>renderFiles()};
-function setView(v){document.querySelectorAll(".nav-item[data-view]").forEach(x=>x.classList.toggle("active",x.dataset.view===v));title.textContent=v[0].toUpperCase()+v.slice(1);page.innerHTML="";views[v]?.();window.scrollTo(0,0);if(innerWidth<=760)document.getElementById("sidebar").classList.remove("open")}
+function setView(v){
+document.querySelectorAll(".nav-item[data-view]").forEach(x=>x.classList.toggle("active",x.dataset.view===v));
+title.textContent=v[0].toUpperCase()+v.slice(1);
+page.innerHTML="";
+try{views[v]?.()}catch(err){
+console.error(err);
+page.innerHTML=shell("Dillo HQ","Something interrupted this view. Your demo data is safe.",'<button class="btn primary" data-action="reset-app">Reload dashboard</button>');
+const b=page.querySelector('[data-action="reset-app"]');
+b.onclick=()=>{localStorage.removeItem(KEY);location.reload()}
+}
+window.scrollTo(0,0);
+if(innerWidth<=760)document.getElementById("sidebar").classList.remove("open")
+}
 function renderOverview(){
 const paid=state.invoices.filter(i=>i.status==="Paid").reduce((a,i)=>a+i.amount,0);
 const outstanding=state.invoices.filter(i=>i.status!=="Paid").reduce((a,i)=>a+i.amount,0);
