@@ -4,3 +4,5 @@
 .modal-backdrop:not(.is-open){pointer-events:none}
 .modal-backdrop.is-open{pointer-events:auto}
 .overview-grid{display:grid;grid-template-columns:1.45fr .9fr;gap:16px}.overview-main,.overview-side{display:grid;gap:16px}@media(max-width:1050px){.overview-grid{grid-template-columns:1fr}}
+
+.calendar-placeholder{padding:28px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}.calendar-placeholder p{color:var(--muted);line-height:1.9;font-size:12px}.overview-grid{display:grid;grid-template-columns:1.45fr .9fr;gap:16px}.overview-main,.overview-side{display:grid;gap:16px}@media(max-width:1050px){.overview-grid{grid-template-columns:1fr}}
