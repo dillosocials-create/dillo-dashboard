@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dillo Dashboard — Dillo Socials</title>
+<meta name="description" content="Dillo Socials client and operations dashboard.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+<aside class="sidebar" id="sidebar">
+<a class="brand" href="#" data-view="overview"><span class="brand-mark">🦔</span><span><b>DILLO</b><small>Socials Dashboard</small></span></a>
+<nav class="nav" aria-label="Main navigation">
+<button class="nav-item active" data-view="overview"><span>⌂</span>Overview</button>
+<button class="nav-item" data-view="clients"><span>◎</span>Clients</button>
+<button class="nav-item" data-view="projects"><span>▣</span>Projects</button>
+<button class="nav-item" data-view="calendar"><span>◷</span>Calendar</button>
+<button class="nav-item" data-view="invoices"><span>◈</span>Invoices</button>
+<button class="nav-item" data-view="files"><span>□</span>Files</button>
+</nav>
+<div class="sidebar-bottom"><div class="mini-card"><span class="status-dot"></span><div><b>Workspace ready</b><small>Local demo data</small></div></div><button class="nav-item" data-action="settings"><span>⚙</span>Settings</button></div>
+</aside>
+<main class="main">
+<header class="topbar"><button class="icon-btn mobile-menu" id="menuBtn" aria-label="Open menu">☰</button><div class="crumb"><span>DILLO HQ</span><strong id="viewTitle">Overview</strong></div><div class="top-actions"><button class="icon-btn" id="notifyBtn" aria-label="Notifications">♧<i></i></button><button class="profile" id="profileBtn"><span class="avatar">A</span><span><b>Aya & Jam</b><small>Admin</small></span><em>⌄</em></button></div></header>
+<div class="page" id="page"></div>
+</main></div>
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+<div class="modal-backdrop" id="modalBackdrop" hidden><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><button class="modal-close" id="modalClose" aria-label="Close">×</button><div id="modalContent"></div></section></div>
+<script src="app.js"></script>
+</body></html>
