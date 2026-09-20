@@ -1,5 +1,9 @@
 (()=>{"use strict";
 const KEY="dillo_dashboard_v6";
+const SUPABASE_URL="https://wkvkqdjtlazpcuxpbbqz.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_L_tfxYAWnjIpNRG8gOsz4Q_lviqp4Fm";
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+let currentUser=null;
 const seed={clients:[
 {id:1,name:"Mia Santos",company:"Bloom Wellness",email:"mia@bloomwellness.com",phone:"+1 555 0101",website:"bloomwellness.com",package:"Consistency & Growth",status:"Active",notes:"Monthly social management."},
 {id:2,name:"Lucas Reed",company:"Northstar Finance",email:"lucas@northstarfinance.com",phone:"+1 555 0102",website:"northstarfinance.com",package:"Starter Presence",status:"Active",notes:"Brand refresh support."},
@@ -23,15 +27,77 @@ files:[
 {id:42,name:"Northstar Logo Pack.zip",client:"Northstar Finance",category:"Brand assets",type:"ZIP",size:"8.1 MB",status:"Pending",notes:"Awaiting approval."},
 {id:43,name:"Casa Content Brief.docx",client:"Casa Migration",category:"Content",type:"DOCX",size:"0.8 MB",status:"Approved",notes:"Launch brief."}]};
 let state=JSON.parse(localStorage.getItem(KEY)||JSON.stringify(seed));
+async function loadCloudState(){
+  const {data,error}=await sb.from("dillo_workspace").select("data").eq("id",1).maybeSingle();
+  if(error)throw error;
+  if(data?.data){state=data.data;localStorage.setItem(KEY,JSON.stringify(state));return}
+  state=JSON.parse(JSON.stringify(seed));
+  const {error:insertError}=await sb.from("dillo_workspace").upsert({id:1,data:state,updated_by:currentUser.id});
+  if(insertError)throw insertError;
+  localStorage.setItem(KEY,JSON.stringify(state));
+}
+async function saveCloudState(){
+  localStorage.setItem(KEY,JSON.stringify(state));
+  if(!currentUser)return;
+  const {error}=await sb.from("dillo_workspace").upsert({id:1,data:state,updated_by:currentUser.id});
+  if(error)throw error;
+}
+function showLogin(message=""){
+  let el=document.getElementById("authScreen");
+  if(!el){el=document.createElement("div");el.id="authScreen";document.body.appendChild(el)}
+  document.querySelector(".app-shell").style.display="none";
+  el.hidden=false;
+  el.innerHTML='<div class="auth-card"><div class="auth-logo"><img src="assets/dillo-socials-logo.svg" alt="Dillo Socials"></div><div class="eyebrow">DILLO HQ</div><h1>Welcome back.</h1><p>Sign in to the private Dillo Socials workspace.</p><form id="loginForm"><label>Email<input name="email" type="email" autocomplete="username" required placeholder="you@dillosocials.com"></label><label>Password<input name="password" type="password" autocomplete="current-password" required placeholder="••••••••"></label><button class="btn primary" type="submit">Sign in</button><div class="auth-error" id="authError">'+esc(message)+'</div></form><small class="auth-note">Private workspace · Aya & Jam</small></div>';
+  document.getElementById("loginForm").onsubmit=async e=>{
+    e.preventDefault();
+    const form=e.currentTarget,button=form.querySelector("button"),errorBox=document.getElementById("authError");
+    button.disabled=true;button.textContent="Signing in…";errorBox.textContent="";
+    const {error}=await sb.auth.signInWithPassword({email:form.email.value.trim(),password:form.password.value});
+    if(error){errorBox.textContent=error.message;button.disabled=false;button.textContent="Sign in"}
+  };
+}
+function hideLogin(){const el=document.getElementById("authScreen");if(el)el.hidden=true;document.querySelector(".app-shell").style.display="flex"}
+async function startApp(){
+  hideLogin();
+  document.querySelector(".mini-card small").textContent="Supabase cloud";
+  try{await loadCloudState();setView("overview")}
+  catch(error){console.error(error);showLogin("The Supabase workspace is not set up yet. Run supabase-setup.sql, then sign in again.")}
+}
+async function boot(){
+  const {data}=await sb.auth.getSession();
+  if(data.session){currentUser=data.session.user;await startApp()}else showLogin();
+  sb.auth.onAuthStateChange(async (_event,session)=>{
+    if(session){currentUser=session.user;await startApp()}
+    else{currentUser=null;showLogin()}
+  });
+}
+
 const page=document.getElementById("page"),title=document.getElementById("viewTitle"),back=document.getElementById("modalBackdrop"),content=document.getElementById("modalContent");
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const save=()=>localStorage.setItem(KEY,JSON.stringify(state));
-const uploadDB="dillo_uploads_v1";
-function openUploadDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open(uploadDB,1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains("files"))req.result.createObjectStore("files")};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
-function saveUpload(id,file){return openUploadDB().then(db=>new Promise((resolve,reject)=>{const tx=db.transaction("files","readwrite");tx.objectStore("files").put(file,id);tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)}}))}
-function getUpload(id){return openUploadDB().then(db=>new Promise((resolve,reject)=>{const tx=db.transaction("files","readonly");const req=tx.objectStore("files").get(Number(id));req.onsuccess=()=>{db.close();resolve(req.result||null)};req.onerror=()=>{db.close();reject(req.error)}}))}
-function deleteUpload(id){return openUploadDB().then(db=>new Promise((resolve,reject)=>{const tx=db.transaction("files","readwrite");tx.objectStore("files").delete(Number(id));tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)}}))}
-function downloadUpload(id,name){getUpload(id).then(file=>{if(!file)return;const url=URL.createObjectURL(file);const a=document.createElement("a");a.href=url;a.download=name||file.name||"download";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}).catch(()=>alert("This file is not available in this browser anymore."))}
+async function uploadCloudFile(file){
+  const path=currentUser.id+"/"+Date.now()+"-"+safeName(file.name);
+  const {error}=await sb.storage.from("dillo-files").upload(path,file,{upsert:false,contentType:file.type||"application/octet-stream"});
+  if(error)throw error;
+  return path;
+}
+function safeName(name){return String(name||"file").replace(/[^a-zA-Z0-9._-]+/g,"-")}
+async function replaceCloudFile(oldPath,file){
+  if(oldPath)await sb.storage.from("dillo-files").remove([oldPath]);
+  return uploadCloudFile(file);
+}
+async function deleteCloudFile(path){
+  if(path)await sb.storage.from("dillo-files").remove([path]);
+}
+async function downloadUpload(id,name){
+  const item=state.files.find(f=>f.id==id);
+  if(!item?.storage_path){alert("This demo file has no cloud upload yet.");return}
+  const {data,error}=await sb.storage.from("dillo-files").download(item.storage_path);
+  if(error){alert("Unable to download this file.");return}
+  const url=URL.createObjectURL(data);
+  const a=document.createElement("a");a.href=url;a.download=name||item.name||"download";document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
 const btn=(label,action,cls="primary")=>'<button class="btn '+cls+'" data-action="'+action+'">'+label+"</button>";
 const del=(type,id)=>'<button class="small-btn danger-btn" data-remove="'+type+'" data-id="'+id+'">Delete</button>';
 const empty=t=>'<div class="empty">'+t+"</div>";
