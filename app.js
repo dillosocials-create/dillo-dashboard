@@ -42,18 +42,48 @@ async function saveCloudState(){
   const {error}=await sb.from("dillo_workspace").upsert({id:1,data:state,updated_by:currentUser.id});
   if(error)throw error;
 }
+async function checkSupabaseConnection(){
+  const started=Date.now();
+  try{
+    const response=await fetch(SUPABASE_URL+"/auth/v1/settings",{method:"GET",headers:{apikey:SUPABASE_PUBLISHABLE_KEY,Authorization:"Bearer "+SUPABASE_PUBLISHABLE_KEY},cache:"no-store"});
+    const ms=Date.now()-started;
+    let body="";
+    try{body=await response.text()}catch(_){}
+    if(response.ok)return "Supabase Auth is reachable ("+ms+" ms). The login request itself is being rejected.";
+    return "Supabase Auth responded with HTTP "+response.status+" ("+ms+" ms).";
+  }catch(error){
+    return "The browser cannot reach Supabase Auth. Check your network/VPN/ad-blocker or the Supabase project URL.";
+  }
+}
 function showLogin(message=""){
   let el=document.getElementById("authScreen");
   if(!el){el=document.createElement("div");el.id="authScreen";document.body.appendChild(el)}
   document.querySelector(".app-shell").style.display="none";
   el.hidden=false;
-  el.innerHTML='<div class="auth-card"><div class="auth-logo"><img src="assets/dillo-socials-logo.svg" alt="Dillo Socials"></div><div class="eyebrow">DILLO HQ</div><h1>Welcome back.</h1><p>Sign in to the private Dillo Socials workspace.</p><form id="loginForm"><label>Email<input name="email" type="email" autocomplete="username" required placeholder="you@dillosocials.com"></label><label>Password<input name="password" type="password" autocomplete="current-password" required placeholder="••••••••"></label><button class="btn primary" type="submit">Sign in</button><div class="auth-error" id="authError">'+esc(message)+'</div></form><small class="auth-note">Private workspace · Aya & Jam</small></div>';
+  el.innerHTML='<div class="auth-card"><div class="auth-logo"><img src="assets/dillo-socials-logo.svg" alt="Dillo Socials"></div><div class="eyebrow">DILLO HQ</div><h1>Welcome back.</h1><p>Sign in to the private Dillo Socials workspace.</p><form id="loginForm"><label>Email<input name="email" type="email" autocomplete="username" required placeholder="you@dillosocials.com"></label><label>Password<input name="password" type="password" autocomplete="current-password" required placeholder="••••••••"></label><button class="btn primary" type="submit">Sign in</button><button class="btn secondary" id="connectionTest" type="button">Test connection</button><div class="auth-error" id="authError">'+esc(message)+'</div></form><small class="auth-note">Private workspace · Aya & Jam</small></div>';
+  document.getElementById("connectionTest").onclick=async()=>{
+    const b=document.getElementById("connectionTest"),errorBox=document.getElementById("authError");
+    b.disabled=true;b.textContent="Testing…";errorBox.textContent="";
+    errorBox.textContent=await checkSupabaseConnection();
+    b.disabled=false;b.textContent="Test connection";
+  };
   document.getElementById("loginForm").onsubmit=async e=>{
     e.preventDefault();
-    const form=e.currentTarget,button=form.querySelector("button"),errorBox=document.getElementById("authError");
+    const form=e.currentTarget,button=form.querySelector(".primary"),errorBox=document.getElementById("authError");
     button.disabled=true;button.textContent="Signing in…";errorBox.textContent="";
-    const {error}=await sb.auth.signInWithPassword({email:form.email.value.trim(),password:form.password.value});
-    if(error){errorBox.textContent=error.message;button.disabled=false;button.textContent="Sign in"}
+    try{
+      const result=await sb.auth.signInWithPassword({email:form.email.value.trim(),password:form.password.value});
+      if(result.error){
+        errorBox.textContent=result.error.message==="Failed to fetch"
+          ? await checkSupabaseConnection()
+          : result.error.message;
+      }else{
+        errorBox.textContent="Signed in. Loading workspace…";
+      }
+    }catch(error){
+      errorBox.textContent=await checkSupabaseConnection();
+    }
+    button.disabled=false;button.textContent="Sign in";
   };
 }
 function hideLogin(){const el=document.getElementById("authScreen");if(el)el.hidden=true;document.querySelector(".app-shell").style.display="flex"}
