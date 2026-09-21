@@ -63,7 +63,7 @@
 #authScreen .auth-card label{position:absolute!important;left:0!important;width:100%!important;height:17.91%!important;display:block!important;font-size:0!important}
 #authScreen .auth-card label:nth-child(1){top:0!important}
 #authScreen .auth-card label:nth-child(2){top:29.9%!important}
-#authScreen .auth-card input{box-sizing:border-box!important;width:100%!important;height:100%!important;padding:0 14.77%!important;line-height:normal!important;border:0!important;border-radius:999px!important;background:transparent!important;box-shadow:none!important;color:#8069bb!important;font-size:clamp(11px,1vw,15px)!important;text-shadow:none!important;transform:none!important;transition:none!important;outline:none!important}
+#authScreen .auth-card input{transition:none!important;outline:none!important;box-sizing:border-box!important;width:100%!important;height:100%!important;padding:0 14.77%!important;line-height:normal!important;border:0!important;border-radius:999px!important;background:transparent!important;box-shadow:none!important;color:#8069bb!important;font-size:clamp(11px,1vw,15px)!important;text-shadow:none!important;transform:none!important;transition:none!important;outline:none!important}
 #authScreen .auth-card input:focus{border:0!important;box-shadow:none!important;transform:none!important;background:transparent!important;text-shadow:none!important}
 #authScreen .auth-card .btn{position:absolute!important;left:0!important;width:100%!important;height:17.91%!important;margin:0!important;border-radius:999px!important;background:transparent!important;border:0!important;box-shadow:none!important;color:transparent!important;font-size:0!important;transform:none!important}
 #authScreen .auth-card .btn.primary{top:58.8%!important}
