@@ -94,7 +94,7 @@ async function startApp(){
   try{await loadCloudState();setView("overview")}
   catch(error){console.error(error);showLogin("The Supabase workspace is not set up yet. Run supabase-setup.sql, then sign in again.")}
 }
-async function boot(){
+window.addEventListener("dillo-authenticated",()=>{ setTimeout(()=>startApp(),0); });\n\nasync function boot(){
   const {data}=await sb.auth.getSession();
   if(data.session){currentUser=data.session.user;await startApp()}else showLogin();
   sb.auth.onAuthStateChange((_event,session)=>{
