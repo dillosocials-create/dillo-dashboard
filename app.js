@@ -28,13 +28,17 @@ files:[
 {id:43,name:"Casa Content Brief.docx",client:"Casa Migration",category:"Content",type:"DOCX",size:"0.8 MB",status:"Approved",notes:"Launch brief."}]};
 let state=JSON.parse(localStorage.getItem(KEY)||JSON.stringify(seed));
 async function loadCloudState(){
-  const {data,error}=await sb.from("dillo_workspace").select("data").eq("id",1).maybeSingle();
-  if(error)throw error;
-  if(data?.data){state=data.data;localStorage.setItem(KEY,JSON.stringify(state));return}
-  state=JSON.parse(JSON.stringify(seed));
-  const {error:insertError}=await sb.from("dillo_workspace").upsert({id:1,data:state,updated_by:currentUser.id});
-  if(insertError)throw insertError;
-  localStorage.setItem(KEY,JSON.stringify(state));
+  const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("Cloud workspace request timed out after 8 seconds.")),8000));
+  const request=(async()=>{
+    const {data,error}=await sb.from("dillo_workspace").select("data").eq("id",1).maybeSingle();
+    if(error)throw error;
+    if(data?.data){state=data.data;localStorage.setItem(KEY,JSON.stringify(state));return}
+    state=JSON.parse(JSON.stringify(seed));
+    const {error:insertError}=await sb.from("dillo_workspace").upsert({id:1,data:state,updated_by:currentUser.id});
+    if(insertError)throw insertError;
+    localStorage.setItem(KEY,JSON.stringify(state));
+  })();
+  return Promise.race([request,timeout]);
 }
 async function saveCloudState(){
   localStorage.setItem(KEY,JSON.stringify(state));
@@ -89,23 +93,76 @@ function showLogin(message=""){
 }
 function hideLogin(){const el=document.getElementById("authScreen");if(el)el.hidden=true;document.querySelector(".app-shell").style.display="flex"}
 async function startApp(){
-  hideLogin();
-  document.querySelector(".mini-card small").textContent="Supabase cloud";
-  try{await loadCloudState();setView("overview")}
-  catch(error){console.error(error);showLogin("The Supabase workspace is not set up yet. Run supabase-setup.sql, then sign in again.")}
+  const auth=document.getElementById("authScreen");
+  const errorBox=document.getElementById("staticAuthError")||document.getElementById("authError");
+  if(auth&&!auth.hidden&&errorBox)errorBox.textContent="Signed in. Loading workspace…";
+  try{
+    await loadCloudState();
+    hideLogin();
+    document.querySelector(".mini-card small").textContent="Supabase cloud";
+    setView("overview");
+  }catch(error){
+    console.error(error);
+    if(auth){
+      auth.hidden=false;
+      if(errorBox)errorBox.textContent=error?.message||"The cloud workspace could not be loaded.";
+    }else{
+      showLogin(error?.message||"The cloud workspace could not be loaded.");
+    }
+    throw error;
+  }
 }
-window.dilloStartApp=startApp;\nwindow.addEventListener("dillo-authenticated",()=>{ setTimeout(()=>startApp(),0); });
+window.dilloStartApp=startApp;
+
+function wireLoginForm(){
+  const form=document.getElementById("staticLoginForm");
+  if(!form||form.dataset.wired)return;
+  form.dataset.wired="1";
+  const button=form.querySelector(".primary");
+  const errorBox=document.getElementById("staticAuthError");
+  const test=document.getElementById("staticConnectionTest");
+  test?.addEventListener("click",async()=>{
+    test.disabled=true;test.textContent="Testing…";if(errorBox)errorBox.textContent="";
+    if(errorBox)errorBox.textContent=await checkSupabaseConnection();
+    test.disabled=false;test.textContent="Test connection";
+  });
+  form.addEventListener("submit",async e=>{
+    e.preventDefault();
+    button.disabled=true;button.textContent="Signing in…";
+    if(errorBox)errorBox.textContent="";
+    try{
+      const {data,error}=await sb.auth.signInWithPassword({email:form.email.value.trim(),password:form.password.value});
+      if(error){
+        if(errorBox)errorBox.textContent=error.message==="Failed to fetch"?await checkSupabaseConnection():error.message;
+        return;
+      }
+      currentUser=data.user;
+      await startApp();
+    }catch(error){
+      if(errorBox)errorBox.textContent=error?.message||"Sign-in failed.";
+    }finally{
+      button.disabled=false;button.textContent="Sign in →";
+    }
+  });
+}
 
 async function boot(){
+  wireLoginForm();
   const {data}=await sb.auth.getSession();
-  if(data.session){currentUser=data.session.user;await startApp()}else showLogin();
+  if(data.session){
+    currentUser=data.session.user;
+    try{await startApp()}catch(_){}
+  }else{
+    showLogin();
+    wireLoginForm();
+  }
   sb.auth.onAuthStateChange((_event,session)=>{
     if(session){
       currentUser=session.user;
-      setTimeout(()=>startApp(),0);
     }else{
       currentUser=null;
       showLogin();
+      wireLoginForm();
     }
   });
 }
