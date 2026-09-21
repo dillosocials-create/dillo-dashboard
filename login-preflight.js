@@ -51,7 +51,9 @@
         if (error) showError(error.message === "Failed to fetch" ? "The browser cannot reach Supabase Auth right now." : error.message);
         else {
           showError("Signed in. Loading Dillo HQ…");
-          setTimeout(() => window.location.reload(), 150);
+          const ready = await client.auth.getSession();
+          if (ready?.data?.session) window.location.reload();
+          else showError("Sign-in succeeded, but the session is still initializing. Please try again.");
         }
       } catch (err) {
         showError("The browser cannot reach Supabase Auth right now.");
