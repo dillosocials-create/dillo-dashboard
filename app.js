@@ -97,9 +97,14 @@ async function startApp(){
 async function boot(){
   const {data}=await sb.auth.getSession();
   if(data.session){currentUser=data.session.user;await startApp()}else showLogin();
-  sb.auth.onAuthStateChange(async (_event,session)=>{
-    if(session){currentUser=session.user;await startApp()}
-    else{currentUser=null;showLogin()}
+  sb.auth.onAuthStateChange((_event,session)=>{
+    if(session){
+      currentUser=session.user;
+      setTimeout(()=>startApp(),0);
+    }else{
+      currentUser=null;
+      showLogin();
+    }
   });
 }
 
