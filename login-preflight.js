@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const CORRECT_URL = "https://wkvkqdjtlazpcuxpbbqz.supabase.co";
+  const CORRECT_URL = "https://wkvkqdjtlazpcuxpbqbz.supabase.co";
   const KEY = "sb_publishable_L_tfxYAWnjIpNRG8gOsz4Q_lviqp4Fm";
 
   function showError(message) {
