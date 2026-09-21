@@ -51,8 +51,11 @@
         if (error) showError(error.message === "Failed to fetch" ? "The browser cannot reach Supabase Auth right now." : error.message);
         else {
           showError("Signed in. Loading Dillo HQ…");
-          if (typeof window.dilloStartApp === "function") window.dilloStartApp();
-          else window.dispatchEvent(new CustomEvent("dillo-authenticated"));
+          const handoff = () => { if (typeof window.dilloStartApp === "function") { window.dilloStartApp(); return true; } return false; };
+          if (!handoff()) {
+            let tries = 0;
+            const timer = setInterval(() => { if (handoff() || ++tries >= 50) clearInterval(timer); }, 100);
+          }
         }
       } catch (err) {
         showError("The browser cannot reach Supabase Auth right now.");
