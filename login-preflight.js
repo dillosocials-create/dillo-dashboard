@@ -49,7 +49,9 @@
           password: form.password.value
         });
         if (error) showError(error.message === "Failed to fetch" ? "The browser cannot reach Supabase Auth right now." : error.message);
-        else {\n          showError("Signed in. Loading Dillo HQ…");\n        }
+        else {
+          showError("Signed in. Loading Dillo HQ…");
+        }
       } catch (err) {
         showError("The browser cannot reach Supabase Auth right now.");
       } finally {
