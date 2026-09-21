@@ -38,10 +38,8 @@
 <g font-family="Arial,sans-serif" fill="#5b478e">
 <text x="580" y="445" font-size="15" font-weight="700">Email</text>
 <rect x="580" y="458" width="440" height="54" rx="29" fill="#fff" fill-opacity=".42" stroke="#d8c5ff" stroke-width="2"/>
-<text x="645" y="492" font-size="15" fill="#b4a3dc">you@domain.com</text>
 <text x="580" y="535" font-size="15" font-weight="700">Password</text>
 <rect x="580" y="548" width="440" height="54" rx="29" fill="#fff" fill-opacity=".42" stroke="#d8c5ff" stroke-width="2"/>
-<text x="645" y="582" font-size="15" fill="#b4a3dc">Enter your password</text>
 <rect x="580" y="635" width="440" height="54" rx="29" fill="url(#gold)" opacity=".98"/>
 <text x="800" y="669" font-size="17" font-weight="700" text-anchor="middle" fill="#3f3266">Sign in   →</text>
 <rect x="580" y="705" width="440" height="54" rx="29" fill="#fff" fill-opacity=".38" stroke="#d8c5ff" stroke-width="2"/>
