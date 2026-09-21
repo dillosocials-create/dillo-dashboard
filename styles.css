@@ -53,3 +53,7 @@
 @keyframes twinkle{0%,100%{opacity:.45;transform:scale(.9) rotate(0)}50%{opacity:1;transform:scale(1.15) rotate(12deg)}}
 @media(max-width:760px){.auth-screen{padding:18px}.auth-card{width:min(440px,100%);padding:30px 24px 24px}.auth-card h1{font-size:33px}.auth-orbit{width:560px;height:240px}.auth-doodle,.auth-mascot{display:none}.auth-spark.s1{left:8%;top:18%}.auth-spark.s2{right:7%;top:22%}.auth-spark.s3{left:9%;bottom:15%}}
 @media(prefers-reduced-motion:reduce){.auth-screen *,.auth-screen::before,.auth-screen::after{animation:none!important;transition:none!important}}
+
+/* Dillo HQ login positioning guard */
+#authScreen{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;display:grid!important;place-items:center!important;margin:0!important;padding:28px!important;overflow:hidden!important;}
+#authScreen .auth-card{position:relative!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;margin:0!important;align-self:center!important;justify-self:center!important;}
