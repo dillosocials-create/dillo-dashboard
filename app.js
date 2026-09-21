@@ -1,6 +1,6 @@
 (()=>{"use strict";
 const KEY="dillo_dashboard_v6";
-const SUPABASE_URL="https://wkvkqdjtlazpcuxpbbqz.supabase.co";
+const SUPABASE_URL="https://wkvkqdjtlazpcuxpbqbz.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_L_tfxYAWnjIpNRG8gOsz4Q_lviqp4Fm";
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 let currentUser=null;
