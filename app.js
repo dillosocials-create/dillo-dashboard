@@ -93,23 +93,17 @@ function showLogin(message=""){
 }
 function hideLogin(){const el=document.getElementById("authScreen");if(el)el.hidden=true;document.querySelector(".app-shell").style.display="flex"}
 async function startApp(){
-  const auth=document.getElementById("authScreen");
-  const errorBox=document.getElementById("staticAuthError")||document.getElementById("authError");
-  if(auth&&!auth.hidden&&errorBox)errorBox.textContent="Signed in. Loading workspace…";
+  hideLogin();
+  const workspaceLabel=document.querySelector(".mini-card small");
+  if(workspaceLabel)workspaceLabel.textContent="Syncing cloud…";
+  setView("overview");
   try{
     await loadCloudState();
-    hideLogin();
-    document.querySelector(".mini-card small").textContent="Supabase cloud";
+    if(workspaceLabel)workspaceLabel.textContent="Supabase cloud";
     setView("overview");
   }catch(error){
-    console.error(error);
-    if(auth){
-      auth.hidden=false;
-      if(errorBox)errorBox.textContent=error?.message||"The cloud workspace could not be loaded.";
-    }else{
-      showLogin(error?.message||"The cloud workspace could not be loaded.");
-    }
-    throw error;
+    console.error("Cloud sync failed; keeping the local workspace available.",error);
+    if(workspaceLabel)workspaceLabel.textContent="Offline mode";
   }
 }
 window.dilloStartApp=startApp;
