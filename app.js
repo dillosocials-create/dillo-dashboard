@@ -60,36 +60,14 @@ async function checkSupabaseConnection(){
   }
 }
 function showLogin(message=""){
-  let el=document.getElementById("authScreen");
-  if(!el){el=document.createElement("div");el.id="authScreen";document.body.appendChild(el)}
+  const el=document.getElementById("authScreen");
+  if(!el)return;
   document.querySelector(".app-shell").style.display="none";
   el.hidden=false;
   el.style.cssText="position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;display:grid!important;place-items:center!important;";
-  el.innerHTML='<div class="auth-orbit" aria-hidden="true"></div><div class="auth-doodle" aria-hidden="true">Big dreams.<br>Better content.</div><span class="auth-spark s1" aria-hidden="true">✦</span><span class="auth-spark s2" aria-hidden="true">✦</span><span class="auth-spark s3" aria-hidden="true">✦</span><div class="auth-card"><div class="auth-logo"><img src="assets/dillo-socials-logo.svg" alt="Dillo Socials"></div><div class="eyebrow">DILLO HQ</div><h1>Welcome back.</h1><p>Sign in to your Dillo HQ and keep the good things growing.</p><form id="loginForm"><label>Email<input name="email" type="email" autocomplete="username" required ></label><label>Password<input name="password" type="password" autocomplete="current-password" required ></label><button class="btn primary" type="submit">Sign in</button><button class="btn secondary" id="connectionTest" type="button">Test connection</button><div class="auth-error" id="authError">'+esc(message)+'</div></form><small class="auth-note">Private workspace · Aya & Jam</small></div>';
-  document.getElementById("connectionTest").onclick=async()=>{
-    const b=document.getElementById("connectionTest"),errorBox=document.getElementById("authError");
-    b.disabled=true;b.textContent="Testing…";errorBox.textContent="";
-    errorBox.textContent=await checkSupabaseConnection();
-    b.disabled=false;b.textContent="Test connection";
-  };
-  document.getElementById("loginForm").onsubmit=async e=>{
-    e.preventDefault();
-    const form=e.currentTarget,button=form.querySelector(".primary"),errorBox=document.getElementById("authError");
-    button.disabled=true;button.textContent="Signing in…";errorBox.textContent="";
-    try{
-      const result=await sb.auth.signInWithPassword({email:form.email.value.trim(),password:form.password.value});
-      if(result.error){
-        errorBox.textContent=result.error.message==="Failed to fetch"
-          ? await checkSupabaseConnection()
-          : result.error.message;
-      }else{
-        errorBox.textContent="Signed in. Loading workspace…";
-      }
-    }catch(error){
-      errorBox.textContent=await checkSupabaseConnection();
-    }
-    button.disabled=false;button.textContent="Sign in";
-  };
+  const errorBox=document.getElementById("staticAuthError");
+  if(errorBox)errorBox.textContent=message||"";
+  wireLoginForm();
 }
 function hideLogin(){const el=document.getElementById("authScreen");if(el)el.hidden=true;document.querySelector(".app-shell").style.display="flex"}
 async function startApp(){
@@ -142,24 +120,28 @@ function wireLoginForm(){
 
 async function boot(){
   wireLoginForm();
-  const {data}=await sb.auth.getSession();
-  if(data.session){
-    currentUser=data.session.user;
+  let initialized=false;
+  const ready=new Promise(resolve=>{
+    const timer=setTimeout(()=>resolve(null),5000);
+    const {data}=sb.auth.onAuthStateChange((event,session)=>{
+      if(event==="INITIAL_SESSION"||event==="SIGNED_IN"||event==="SIGNED_OUT"){
+        clearTimeout(timer);
+        if(!initialized){
+          initialized=true;
+          resolve(session||null);
+        }
+      }
+    });
+  });
+  const session=await ready;
+  if(session){
+    currentUser=session.user;
     try{await startApp()}catch(_){}
   }else{
     showLogin();
-    wireLoginForm();
   }
-  sb.auth.onAuthStateChange((_event,session)=>{
-    if(session){
-      currentUser=session.user;
-    }else{
-      currentUser=null;
-      showLogin();
-      wireLoginForm();
-    }
-  });
 }
+
 
 const page=document.getElementById("page"),title=document.getElementById("viewTitle"),back=document.getElementById("modalBackdrop"),content=document.getElementById("modalContent");
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
