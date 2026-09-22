@@ -121,19 +121,27 @@ function wireLoginForm(){
 async function boot(){
   wireLoginForm();
   let initialized=false;
-  const ready=new Promise(resolve=>{
-    const timer=setTimeout(()=>resolve(null),5000);
-    const {data}=sb.auth.onAuthStateChange((event,session)=>{
-      if(event==="INITIAL_SESSION"||event==="SIGNED_IN"||event==="SIGNED_OUT"){
-        clearTimeout(timer);
-        if(!initialized){
-          initialized=true;
-          resolve(session||null);
-        }
+  let resolveReady;
+  const ready=new Promise(resolve=>{resolveReady=resolve});
+  const {data:authListener}=sb.auth.onAuthStateChange((event,session)=>{
+    if(event==="INITIAL_SESSION"){
+      initialized=true;
+      resolveReady(session||null);
+      return;
+    }
+    if(initialized){
+      if(session){
+        currentUser=session.user;
+      }else{
+        currentUser=null;
+        showLogin();
       }
-    });
+    }
   });
-  const session=await ready;
+  const session=await Promise.race([
+    ready,
+    new Promise(resolve=>setTimeout(()=>resolve(null),5000))
+  ]);
   if(session){
     currentUser=session.user;
     try{await startApp()}catch(_){}
